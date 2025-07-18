@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Snack Store Control Panel</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { max-width: 900px; margin: auto; background: #fef9f0; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { border: 1px solid #f2c94c; padding: 8px; text-align: center; }
+    th { background: #f2994a; color: white; }
+    input[type="number"] { width: 80px; }
+    input[type="text"] { width: 150px; }
+    #login-section { text-align: center; margin-top: 100px; }
+  </style>
+</head>
+<body>
+  <div id="login-section">
+    <h2>Admin Login</h2>
+    <input type="password" id="password-input" placeholder="Enter password" />
+    <button id="login-btn">Login</button>
+    <p id="login-error" style="color:red; display:none;">Wrong password!</p>
+  </div>
+
+  <div id="panel" style="display:none;">
+    <h1>Snack Store Control Panel</h1>
+    <h2>Orders</h2>
+    <div id="orders-container">Loading orders...</div>
+
+    <h2>Total Earnings: $<span id="total-earnings">0.00</span></h2>
+
+    <h2>Manage Items</h2>
+    <table id="items-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price ($)</th>
+          <th>Stock</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Add New Item</h3>
+    <input type="text" id="new-name" placeholder="Name" />
+    <input type="number" id="new-price" placeholder="Price" min="0" step="0.01" />
+    <input type="number" id="new-stock" placeholder="Stock" min="0" step="1" />
+    <button id="add-item-btn">Add Item</button>
+  </div>
+
+  <script>
+    const API_BASE = "https://script.google.com/macros/s/AKfycbylcsO6SfJg4UDOYZzy_GHez3WWQwxm7Rzvm9jVpC40ch-9V0CBaq9P-CMOv3_03g9V/exec";
+    const PASSWORD = "tsnotdapsd";
+
+    const loginSection = document.getElementById("login-section");
+    const panel = document.getElementById("panel");
+    const loginBtn = document.getElementById("login-btn");
+    const passwordInput = document.getElementById("password-input");
+    const loginError = document.getElementById("login-error");
+
+    loginBtn.onclick = () => {
+      if (passwordInput.value === PASSWORD) {
+        loginSection.style.display = "none";
+        panel.style.display = "block";
+        initControlPanel();
+      } else {
+        loginError.style.display = "block";
+      }
+    };
+
+    // Globals
+    let items = [];
+    let orders = [];
+
+    async function fetchItems() {
+      const res = await fetch(`${API_BASE}?type=items`);
+      items = await res.json();
+      renderItems();
+    }
+
+    async function fetchOrders() {
+      const res = await fetch(`${API_BASE}?type=orders`);
+      orders = await res.json();
+      renderOrders();
+    }
+
+    async function fetchEarnings() {
+      const res = await fetch(`${API_BASE}?type=earnings`);
+      const text = await res.text();
+      document.getElementById("total-earnings").textContent = parseFloat(text).toFixed(2);
+    }
+
+    function renderOrders() {
+      const container = document.getElementById("orders-container");
+      if (orders.length === 0) {
+        container.innerHTML = "<p>No orders yet.</p>";
+        return;
+      }
+
+      let html = "<table><thead><tr><th>Name</th><th>Delivery Time</th><th>Delivery Location</th><th>Items</th><th>Total ($)</th></tr></thead><tbody>";
+      orders.forEach(o => {
+        let itemsList = "";
+        try {
+          const orderItems = JSON.parse(o.items);
+          itemsList = orderItems.map(i => `${i.name} x${i.qty}`).join(", ");
+        } catch {
+          itemsList = o.items;
+        }
+        html += `<tr>
+          <td>${o.name}</td>
+          <td>${o.delivery_time}</td>
+          <td>${o.delivery_location}</td>
+          <td>${itemsList}</td>
+          <td>${parseFloat(o
