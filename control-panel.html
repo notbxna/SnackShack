@@ -3,113 +3,295 @@
 <head>
   <meta charset="UTF-8" />
   <title>Snack Store Control Panel</title>
-  <link rel="stylesheet" href="style.css" />
   <style>
-    body { max-width: 900px; margin: auto; background: #fef9f0; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th, td { border: 1px solid #f2c94c; padding: 8px; text-align: center; }
-    th { background: #f2994a; color: white; }
-    input[type="number"] { width: 80px; }
-    input[type="text"] { width: 150px; }
-    #login-section { text-align: center; margin-top: 100px; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background: #fef9f0;
+      color: #333;
+    }
+    h1, h2 {
+      color: #e07b00;
+      text-align: center;
+    }
+    #login-section, #panel-section {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      border: 2px solid #f2994a;
+      border-radius: 10px;
+      background: white;
+    }
+    input[type="password"], input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    button {
+      background: #f2994a;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #e07b00;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #f2994a;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #f2994a;
+      color: white;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+      font-family: monospace;
+      margin-bottom: 20px;
+    }
+    #orders-list {
+      max-height: 300px;
+      overflow-y: auto;
+      background: #fff8e1;
+      border: 1px solid #f2994a;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .order-item {
+      border-bottom: 1px solid #f2994a;
+      padding: 10px 0;
+    }
   </style>
 </head>
 <body>
+
   <div id="login-section">
-    <h2>Admin Login</h2>
+    <h1>Admin Control Panel Login</h1>
     <input type="password" id="password-input" placeholder="Enter password" />
     <button id="login-btn">Login</button>
-    <p id="login-error" style="color:red; display:none;">Wrong password!</p>
+    <p id="login-error" style="color:red; display:none;">Incorrect password. Try again.</p>
   </div>
 
-  <div id="panel" style="display:none;">
+  <div id="panel-section" style="display:none;">
     <h1>Snack Store Control Panel</h1>
-    <h2>Orders</h2>
-    <div id="orders-container">Loading orders...</div>
 
-    <h2>Total Earnings: $<span id="total-earnings">0.00</span></h2>
-
-    <h2>Manage Items</h2>
+    <h2>Items Inventory</h2>
     <table id="items-table">
       <thead>
-        <tr>
-          <th>Name</th>
-          <th>Price ($)</th>
-          <th>Stock</th>
-          <th>Actions</th>
-        </tr>
+        <tr><th>Name</th><th>Price ($)</th><th>Stock</th><th>Actions</th></tr>
       </thead>
       <tbody></tbody>
     </table>
 
     <h3>Add New Item</h3>
-    <input type="text" id="new-name" placeholder="Name" />
-    <input type="number" id="new-price" placeholder="Price" min="0" step="0.01" />
-    <input type="number" id="new-stock" placeholder="Stock" min="0" step="1" />
+    <input type="text" id="new-item-name" placeholder="Item name" />
+    <input type="number" id="new-item-price" placeholder="Price" min="0" step="0.01" />
+    <input type="number" id="new-item-stock" placeholder="Stock" min="0" step="1" />
     <button id="add-item-btn">Add Item</button>
+
+    <h2>Orders</h2>
+    <div id="orders-list"></div>
+
+    <h2>Total Earnings: $<span id="earnings">0.00</span></h2>
   </div>
 
-  <script>
-    const API_BASE = "https://script.google.com/macros/s/AKfycbylcsO6SfJg4UDOYZzy_GHez3WWQwxm7Rzvm9jVpC40ch-9V0CBaq9P-CMOv3_03g9V/exec";
-    const PASSWORD = "tsnotdapsd";
+<script>
+  const API_BASE = "https://script.google.com/macros/s/AKfycbylcsO6SfJg4UDOYZzy_GHez3WWQwxm7Rzvm9jVpC40ch-9V0CBaq9P-CMOv3_03g9V/exec";
+  const PASSWORD = "tsnotdapsd";
 
-    const loginSection = document.getElementById("login-section");
-    const panel = document.getElementById("panel");
-    const loginBtn = document.getElementById("login-btn");
-    const passwordInput = document.getElementById("password-input");
-    const loginError = document.getElementById("login-error");
+  const loginSection = document.getElementById("login-section");
+  const panelSection = document.getElementById("panel-section");
+  const passwordInput = document.getElementById("password-input");
+  const loginBtn = document.getElementById("login-btn");
+  const loginError = document.getElementById("login-error");
 
-    loginBtn.onclick = () => {
-      if (passwordInput.value === PASSWORD) {
-        loginSection.style.display = "none";
-        panel.style.display = "block";
-        initControlPanel();
-      } else {
-        loginError.style.display = "block";
-      }
-    };
+  const itemsTableBody = document.querySelector("#items-table tbody");
+  const ordersList = document.getElementById("orders-list");
+  const earningsSpan = document.getElementById("earnings");
 
-    // Globals
-    let items = [];
-    let orders = [];
+  const newItemName = document.getElementById("new-item-name");
+  const newItemPrice = document.getElementById("new-item-price");
+  const newItemStock = document.getElementById("new-item-stock");
+  const addItemBtn = document.getElementById("add-item-btn");
 
-    async function fetchItems() {
-      const res = await fetch(`${API_BASE}?type=items`);
-      items = await res.json();
-      renderItems();
+  let items = [];
+  let orders = [];
+
+  loginBtn.addEventListener("click", () => {
+    if (passwordInput.value === PASSWORD) {
+      loginSection.style.display = "none";
+      panelSection.style.display = "block";
+      startPanel();
+    } else {
+      loginError.style.display = "block";
+    }
+  });
+
+  addItemBtn.addEventListener("click", async () => {
+    const name = newItemName.value.trim();
+    const price = parseFloat(newItemPrice.value);
+    const stock = parseInt(newItemStock.value);
+
+    if (!name || isNaN(price) || isNaN(stock)) {
+      alert("Please fill all new item fields correctly.");
+      return;
     }
 
-    async function fetchOrders() {
-      const res = await fetch(`${API_BASE}?type=orders`);
-      orders = await res.json();
-      renderOrders();
-    }
+    await fetch(API_BASE, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "addItem",
+        item: { name, price, stock }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
 
-    async function fetchEarnings() {
-      const res = await fetch(`${API_BASE}?type=earnings`);
-      const text = await res.text();
-      document.getElementById("total-earnings").textContent = parseFloat(text).toFixed(2);
-    }
+    newItemName.value = "";
+    newItemPrice.value = "";
+    newItemStock.value = "";
+    await loadItems();
+  });
 
-    function renderOrders() {
-      const container = document.getElementById("orders-container");
-      if (orders.length === 0) {
-        container.innerHTML = "<p>No orders yet.</p>";
+  function createItemRow(item) {
+    const tr = document.createElement("tr");
+
+    const nameTd = document.createElement("td");
+    nameTd.textContent = item.name;
+
+    const priceTd = document.createElement("td");
+    const priceInput = document.createElement("input");
+    priceInput.type = "number";
+    priceInput.min = "0";
+    priceInput.step = "0.01";
+    priceInput.value = item.price;
+    priceInput.style.width = "80px";
+    priceTd.appendChild(priceInput);
+
+    const stockTd = document.createElement("td");
+    const stockInput = document.createElement("input");
+    stockInput.type = "number";
+    stockInput.min = "0";
+    stockInput.step = "1";
+    stockInput.value = item.stock;
+    stockInput.style.width = "60px";
+    stockTd.appendChild(stockInput);
+
+    const actionsTd = document.createElement("td");
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "Save";
+    saveBtn.addEventListener("click", async () => {
+      const newPrice = parseFloat(priceInput.value);
+      const newStock = parseInt(stockInput.value);
+
+      if (isNaN(newPrice) || isNaN(newStock)) {
+        alert("Enter valid numbers for price and stock.");
         return;
       }
 
-      let html = "<table><thead><tr><th>Name</th><th>Delivery Time</th><th>Delivery Location</th><th>Items</th><th>Total ($)</th></tr></thead><tbody>";
-      orders.forEach(o => {
-        let itemsList = "";
-        try {
-          const orderItems = JSON.parse(o.items);
-          itemsList = orderItems.map(i => `${i.name} x${i.qty}`).join(", ");
-        } catch {
-          itemsList = o.items;
-        }
-        html += `<tr>
-          <td>${o.name}</td>
-          <td>${o.delivery_time}</td>
-          <td>${o.delivery_location}</td>
-          <td>${itemsList}</td>
-          <td>${parseFloat(o
+      await fetch(API_BASE, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "updateItem",
+          item: {
+            id: item.id,
+            price: newPrice,
+            stock: newStock
+          }
+        }),
+        headers: { "Content-Type": "application/json" }
+      });
+      await loadItems();
+    });
+
+    actionsTd.appendChild(saveBtn);
+
+    tr.appendChild(nameTd);
+    tr.appendChild(priceTd);
+    tr.appendChild(stockTd);
+    tr.appendChild(actionsTd);
+
+    return tr;
+  }
+
+  async function loadItems() {
+    const res = await fetch(`${API_BASE}?type=items`);
+    items = await res.json();
+
+    itemsTableBody.innerHTML = "";
+    items.forEach(item => {
+      const row = createItemRow(item);
+      itemsTableBody.appendChild(row);
+    });
+  }
+
+  async function loadOrders() {
+    const res = await fetch(`${API_BASE}?type=orders`);
+    orders = await res.json();
+
+    ordersList.innerHTML = "";
+    if (orders.length === 0) {
+      ordersList.textContent = "No orders yet.";
+      return;
+    }
+
+    orders.forEach(order => {
+      const div = document.createElement("div");
+      div.className = "order-item";
+
+      let itemsList = "";
+      try {
+        const orderItems = JSON.parse(order.items);
+        itemsList = orderItems.map(i => `${i.name} x${i.qty}`).join(", ");
+      } catch {
+        itemsList = "Invalid items data";
+      }
+
+      div.innerHTML = `
+        <strong>Name:</strong> ${order.name}<br>
+        <strong>Delivery Time:</strong> ${order.delivery_time}<br>
+        <strong>Delivery Location:</strong> ${order.delivery_location}<br>
+        <strong>Items:</strong> ${itemsList}<br>
+        <strong>Total:</strong> $${parseFloat(order.total).toFixed(2)}
+      `;
+
+      ordersList.appendChild(div);
+    });
+  }
+
+  async function loadEarnings() {
+    const res = await fetch(`${API_BASE}?type=earnings`);
+    if (res.ok) {
+      const earnings = await res.text();
+      earningsSpan.textContent = parseFloat(earnings).toFixed(2);
+    }
+  }
+
+  async function refreshData() {
+    await Promise.all([loadItems(), loadOrders(), loadEarnings()]);
+  }
+
+  async function startPanel() {
+    await refreshData();
+    setInterval(refreshData, 5000); // Refresh every 5 seconds
+  }
+</script>
+
+</body>
+</html>
