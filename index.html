@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Snack Store</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🍪 Welcome to the Snack Store</h1>
+  <div id="snack-container"></div>
+
+  <h2>🛒 Cart</h2>
+  <div id="cart"></div>
+  <button id="checkout-btn">Checkout</button>
+
+  <div id="checkout-form" style="display:none;">
+    <h3>Complete Your Order</h3>
+    <input type="text" id="name" placeholder="Your Name"><br>
+    <input type="text" id="delivery-time" placeholder="Delivery Time"><br>
+    <input type="text" id="delivery-location" placeholder="Delivery Location"><br>
+    <button id="submit-order">Submit Order</button>
+  </div>
+
+  <script>
+    const API_BASE = "https://script.google.com/macros/s/AKfycbylcsO6SfJg4UDOYZzy_GHez3WWQwxm7Rzvm9jVpC40ch-9V0CBaq9P-CMOv3_03g9V/exec";
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
