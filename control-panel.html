@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Snack Store Control Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background: #fef9f0;
+      color: #333;
+    }
+    h1, h2 {
+      color: #e07b00;
+      text-align: center;
+    }
+    input[type="password"], input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    button {
+      background: #f2994a;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #e07b00;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #f2994a;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #f2994a;
+      color: white;
+    }
+    #orders-list {
+      max-height: 300px;
+      overflow-y: auto;
+      background: #fff8e1;
+      border: 1px solid #f2994a;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .order-item {
+      border-bottom: 1px solid #f2994a;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="login-section">
+    <h1>Admin Login</h1>
+    <input type="password" id="password-input" placeholder="Enter password" />
+    <button id="login-btn">Login</button>
+    <p id="login-error" style="color:red; display:none;">Incorrect password.</p>
+  </div>
+
+  <div id="panel-section" style="display:none;">
+    <h1>Snack Store Control Panel</h1>
+
+    <h2>Inventory</h2>
+    <table id="items-table">
+      <thead>
+        <tr><th>Name</th><th>Price</th><th>Stock</th><th>Save</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Add New Item</h3>
+    <input type="text" id="new-name" placeholder="Name" />
+    <input type="number" id="new-price" placeholder="Price" />
+    <input type="number" id="new-stock" placeholder="Stock" />
+    <button id="add-item">Add Item</button>
+
+    <h2>Orders</h2>
+    <div id="orders-list">Loading...</div>
+
+    <h2>Total Earnings: $<span id="earnings">0.00</span></h2>
+  </div>
+
+<script>
+  const API_BASE = "https://script.google.com/macros/s/AKfycbylcsO6SfJg4UDOYZzy_GHez3WWQwxm7Rzvm9jVpC40ch-9V0CBaq9P-CMOv3_03g9V/exec";
+  const PASSWORD = "tsnotdapsd";
+
+  const loginBtn = document.getElementById("login-btn");
+  loginBtn.onclick = () => {
+    const input = document.getElementById("password-input").value;
+    if (input === PASSWORD) {
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("panel-section").style.display = "block";
+      initControlPanel();
+    } else {
+      document.getElementById("login-error").style.display = "block";
+    }
+  };
+
+  async function initControlPanel() {
+    await loadItems();
+    await loadOrders();
+    await loadEarnings();
+    setInterval(() => {
+      loadItems();
+      loadOrders();
+      loadEarnings();
+    }, 5000);
+  }
+
+  async function loadItems() {
+    const res = await fetch(`${API_BASE}?type=items`);
+    const items = await res.json();
+    const tbody = document.querySelector("#items-table tbody");
+    tbody.innerHTML = "";
+    items.forEach(item => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.name}</td>
+        <td><input type="number" value="${item.price}" step="0.01" /></td>
+        <td><input type="number" value="${item.stock}" /></td>
+        <td><button>Save</button></td>
+      `;
+      tr.querySelector("button").onclick = async () => {
+        const newPrice = parseFloat(tr.querySelectorAll("input")[0].value);
+        const newStock = parseInt(tr.querySelectorAll("input")[1].value);
+        await fetch(API_BASE, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "updateItem",
+            item: { id: item.id, price: newPrice, stock: newStock }
+          }),
+          headers: { "Content-Type": "application/json" }
+        });
+        loadItems();
+      };
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById("add-item").onclick = async () => {
+    const name = document.getElementById("new-name").value;
+    const price = parseFloat(document.getElementById("new-price").value);
+    const stock = parseInt(document.getElementById("new-stock").value);
+    if (!name || isNaN(price) || isNaN(stock)) {
+      alert("Fill out all fields");
+      return;
+    }
+    await fetch(API_BASE, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "addItem",
+        item: { name, price, stock }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    document.getElementById("new-name").value = "";
+    document.getElementById("new-price").value = "";
+    document.getElementById("new-stock").value = "";
+    loadItems();
+  };
+
+  async function loadOrders() {
+    const res = await fetch(`${API_BASE}?type=orders`);
+    const orders = await res.json();
+    const list = document.getElementById("orders-list");
+    list.innerHTML = "";
+    if (orders.length === 0) {
+      list.textContent = "No orders yet.";
+      return;
+    }
+    orders.forEach(order => {
+      const div = document.createElement("div");
+      div.className = "order-item";
+      const items = JSON.parse(order.items || "[]")
+        .map(i => `${i.name} x${i.qty}`)
+        .join(", ");
+      div.innerHTML = `
+        <strong>${order.name}</strong><br>
+        Delivery: ${order.delivery_time} at ${order.delivery_location}<br>
+        Items: ${items}<br>
+        Total: $${parseFloat(order.total).toFixed(2)}
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  async function loadEarnings() {
+    const res = await fetch(`${API_BASE}?type=earnings`);
+    const total = await res.text();
+    document.getElementById("earnings").textContent = parseFloat(total).toFixed(2);
+  }
+</script>
+
+</body>
+</html>
