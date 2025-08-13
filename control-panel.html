@@ -1,109 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Snack Store Control Panel</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-      background: #fef9f0;
-      color: #333;
-    }
-    h1, h2 {
-      color: #e07b00;
-      text-align: center;
-    }
-    input[type="password"], input[type="text"], input[type="number"] {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    button {
-      background: #f2994a;
-      border: none;
-      padding: 10px 20px;
-      color: white;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-bottom: 15px;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #e07b00;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-    }
-    th, td {
-      border: 1px solid #f2994a;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background: #f2994a;
-      color: white;
-    }
-    #orders-list {
-      max-height: 300px;
-      overflow-y: auto;
-      background: #fff8e1;
-      border: 1px solid #f2994a;
-      padding: 10px;
-      border-radius: 8px;
-    }
-    .order-item {
-      border-bottom: 1px solid #f2994a;
-      padding: 10px 0;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Snack Store Control Panel</title>
+<style>
+  /* ===== Base Styling ===== */
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+    background: #fafafa;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  h1, h2, h3 {
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 15px;
+    color: #ff7b00;
+  }
+
+  /* ===== Login Box ===== */
+  #login-section {
+    max-width: 400px;
+    margin: 80px auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  input[type="password"], input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    transition: border 0.2s;
+  }
+  input:focus {
+    border-color: #ff7b00;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255,123,0,0.15);
+  }
+
+  button {
+    background: #ff7b00;
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background: #e86a00;
+  }
+
+  /* ===== Panel Layout ===== */
+  #panel-section {
+    animation: fadeIn 0.5s ease;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  th, td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #f2f2f2;
+  }
+  th {
+    background: #ff7b00;
+    color: white;
+    font-weight: 500;
+  }
+  tr:last-child td {
+    border-bottom: none;
+  }
+  td input {
+    width: 80px;
+    padding: 6px;
+    text-align: center;
+  }
+
+  /* ===== Orders List ===== */
+  #orders-list {
+    max-height: 300px;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .order-item {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .order-item:last-child {
+    border-bottom: none;
+  }
+  .order-item strong {
+    font-size: 1.05rem;
+    color: #ff7b00;
+  }
+
+  /* ===== Earnings Badge ===== */
+  #earnings {
+    font-weight: bold;
+    font-size: 1.3rem;
+    color: #2d7a2d;
+  }
+
+  /* ===== Animation ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
 </head>
 <body>
 
-  <div id="login-section">
-    <h1>Admin Login</h1>
-    <input type="password" id="password-input" placeholder="Enter password" />
-    <button id="login-btn">Login</button>
-    <p id="login-error" style="color:red; display:none;">Incorrect password.</p>
-  </div>
+<div id="login-section">
+  <h1>Admin Login</h1>
+  <input type="password" id="password-input" placeholder="Enter password" />
+  <button id="login-btn">Login</button>
+  <p id="login-error" style="color:red; display:none;">Incorrect password.</p>
+</div>
 
-  <div id="panel-section" style="display:none;">
-    <h1>Snack Store Control Panel</h1>
+<div id="panel-section" style="display:none;">
+  <h1>Snack Store Control Panel</h1>
 
-    <h2>Inventory</h2>
-    <table id="items-table">
-      <thead>
-        <tr><th>Name</th><th>Price</th><th>Stock</th><th>Save</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <h2>Inventory</h2>
+  <table id="items-table">
+    <thead>
+      <tr><th>Name</th><th>Price</th><th>Stock</th><th>Save</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    <h3>Add New Item</h3>
-    <input type="text" id="new-name" placeholder="Name" />
-    <input type="number" id="new-price" placeholder="Price" />
-    <input type="number" id="new-stock" placeholder="Stock" />
-    <button id="add-item">Add Item</button>
+  <h3>Add New Item</h3>
+  <input type="text" id="new-name" placeholder="Name" />
+  <input type="number" id="new-price" placeholder="Price" />
+  <input type="number" id="new-stock" placeholder="Stock" />
+  <button id="add-item">Add Item</button>
 
-    <h2>Orders</h2>
-    <div id="orders-list">Loading...</div>
+  <h2>Orders</h2>
+  <div id="orders-list">Loading...</div>
 
-    <h2>Total Earnings: $<span id="earnings">0.00</span></h2>
-  </div>
+  <h2>Total Earnings: $<span id="earnings">0.00</span></h2>
+</div>
 
 <script>
   const API_BASE = "https://script.google.com/macros/s/AKfycbylcsO6SfJg4UDOYZzy_GHez3WWQwxm7Rzvm9jVpC40ch-9V0CBaq9P-CMOv3_03g9V/exec";
   const PASSWORD = "tsnotdapsd";
 
-  const loginBtn = document.getElementById("login-btn");
-  loginBtn.onclick = () => {
+  document.getElementById("login-btn").onclick = () => {
     const input = document.getElementById("password-input").value;
     if (input === PASSWORD) {
       document.getElementById("login-section").style.display = "none";
